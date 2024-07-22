@@ -1,0 +1,10 @@
+services:
+  disk-analyser:
+    build: .
+    restart: always
+    environment:
+      - PATHS=/main
+    volumes:
+      - ./:/main
+    ports:
+      - "5609:5609"
