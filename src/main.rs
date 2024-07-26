@@ -1,6 +1,3 @@
-//! Stream stats for all running Docker containers asynchronously
-#![type_length_limit = "2097152"]
-
 mod leptos_axum;
 
 use std::env;
@@ -14,9 +11,10 @@ use axum::{routing::get, Router};
 use leptos::view;
 use tower_http::services::ServeDir;
 
+const CRITICAL_DISK_THRESHOLD: u8 = 80;
+
 async fn index() -> LeptosHtml {
     let paths = env::var("PATHS").unwrap_or("./".into());
-    println!("reading paths: {}", paths);
     let paths_to_check: Vec<&str> = paths.split(",").collect();
 
     let results = analyse_disk_space_at(paths_to_check).await;
@@ -38,6 +36,24 @@ async fn index() -> LeptosHtml {
             </head>
             <body>
             <h1>Disk Stats</h1>
+            // critical disks
+            {
+                let critical_disks: Vec<String> = results
+                    .iter()
+                    .filter(|result| result.percent > CRITICAL_DISK_THRESHOLD)
+                    .map(|disk| disk.path.clone())
+                    .collect();
+
+                if critical_disks.len() > 0 {
+                    view! {
+                        <h2 id="critical">{format!("Critical Disks: {}", critical_disks.join(", "))}</h2>
+                    }
+                }else{
+                    view! {
+                        <h2></h2>
+                    }                
+                }
+            }
             <table>
                 <tr>
                     <th>
@@ -54,7 +70,10 @@ async fn index() -> LeptosHtml {
                     </th>
                 </tr>
                     {results.into_iter().map(|result| view! {
-                        <tr style=("--used", format!("{}%", result.percent))>
+                        <tr style=("--used", format!("{}%", result.percent)) 
+                            style=("--slider-color", if result.percent > CRITICAL_DISK_THRESHOLD { "#F44336" } else { "#50d750" })
+                            style=("--color", if result.percent > CRITICAL_DISK_THRESHOLD { "white" } else { "black" })
+                        >
                             <td> {result.path} </td>
                             <td> {human_readable_bytes(result.avail)} </td>
                             <td> {human_readable_bytes(result.used)} </td>

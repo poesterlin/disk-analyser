@@ -4,6 +4,10 @@ body {
   background-color: #f5f5f5;
 }
 
+h2 {
+  color: #F44336;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -19,10 +23,11 @@ td {
 td:first-child {
   background: linear-gradient(
     90deg,
-    rgb(80, 215, 80) var(--used),
+    var(--slider-color) var(--used),
     transparent var(--used),
     transparent
   );
+  color: var(--color)
 }
 
 th {
